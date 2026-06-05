@@ -1,16 +1,17 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var db *gorm.DB
-var err error
 
 func main() {
-
+	var err error
 	var dns string = "host=127.0.0.1 user=root password=root123 dbname=go_inventory sslmode=disable"
 	db, err = gorm.Open(postgres.Open(dns))
 
@@ -18,9 +19,10 @@ func main() {
 		panic(err)
 	}
 
-	router := gin.Default()
+	var router = gin.Default()
 
 	router.GET("/get-book/:id", getBook)
+	router.GET("/get-books", getBooks)
 	router.POST("/add-book", addBook)
 	router.PUT("/replace-book/:id", replaceBook)
 	router.PATCH("/upgrade-book/:id", upgradeBook)
@@ -32,21 +34,39 @@ type Book struct {
 	BookId          int `gorm:"column:book_id;primaryKey;AutoIncrement" json:"book_id"`
 	Title           string
 	Language        string
-	Summary         string
-	Isbn            string
 	Publisher       string
 	PublicationDate string `gorm:"column:publication_date" json:"publication_date"`
+	Isbn            string `gorm:"column:isbn" json:"isbn"`
+	Summary         string `gorm:"column:summary" json:"summary"`
+}
+
+func getBooks(c *gin.Context) {
+	var books []Book
+
+	if err := db.Find(&books).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": books})
 }
 
 func getBook(c *gin.Context) {
+	var books Book
+	var bookId = c.Param("id")
 
-	var books []Book
-	err = db.Find(&books).Error
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+	err := db.Where("book_id = ?", bookId).First(&books)
+	if err.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error.Error()})
+		return
 	}
-	bookID := c.Param("id")
-	c.JSON(200, gin.H{"action": "book is fetched", "book_id": bookID, "book": books})
+
+	if err.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "book not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": books})
 }
 
 type newBook struct {
@@ -59,105 +79,109 @@ type newBook struct {
 }
 
 func addBook(c *gin.Context) {
-	var newBook newBook
-	if err := c.ShouldBindJSON(&newBook); err != nil {
-		c.JSON(500, gin.H{"error": err.Error(), "message": "could not add the book"})
-	}
-
-	var record Book = Book{
-		Title:           *newBook.Title,
-		Summary:         *newBook.Summary,
-		Isbn:            *newBook.Isbn,
-		Publisher:       *newBook.Publisher,
-		PublicationDate: *newBook.PublicationDate,
-		Language:        *newBook.Language,
-	}
-
-	res := db.Create(&record)
-	if res.Error != nil {
-		c.JSON(500, gin.H{"error": res.Error})
-	}
-
-	c.JSON(200, gin.H{"action": "book is added", "book": newBook})
-}
-
-func replaceBook(c *gin.Context) {
-
-	var replaceBook newBook
-	var bookID any = c.Param("id")
-
-	if err := c.ShouldBindJSON(&replaceBook); err != nil {
-		c.JSON(400, gin.H{"error": err.Error(), "message": "invalid input details"})
-	}
-
-	res := db.Model(&Book{}).Where("book_id", bookID).Updates(replaceBook)
-	if res.Error != nil {
-		c.JSON(500, gin.H{"error": res.Error})
-	}
-
-	c.JSON(200, gin.H{"action": "book is replaced", "book_id": bookID, "book": replaceBook})
-}
-
-func upgradeBook(c *gin.Context) {
-	var bookID = c.Param("id")
-	var patchRow newBook
-	var patchRecord = make(map[string]any)
-
-	if err := c.ShouldBindJSON(&patchRow); err != nil {
-		c.JSON(400, gin.H{"error": err.Error(), "message": "invalid input details"})
+	var record newBook
+	if err := c.ShouldBindJSON(&record); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if patchRow.Title != nil {
-		patchRecord["title"] = *patchRow.Title
+	var data = Book{
+		Title:           *record.Title,
+		Publisher:       *record.Publisher,
+		Language:        *record.Language,
+		Isbn:            *record.Isbn,
+		PublicationDate: *record.PublicationDate,
+		Summary:         *record.Summary,
 	}
 
-	if patchRow.Summary != nil {
-		patchRecord["summary"] = *patchRow.Summary
-	}
-
-	if patchRow.Isbn != nil {
-		patchRecord["isbn"] = *patchRow.Isbn
-	}
-
-	if patchRow.Publisher != nil {
-		patchRecord["publisher"] = *patchRow.Publisher
-	}
-
-	if patchRow.PublicationDate != nil {
-		patchRecord["publication_date"] = *patchRow.PublicationDate
-	}
-
-	if patchRow.Title != nil {
-		patchRecord["title"] = *patchRow.Title
-	}
-
-	if len(patchRecord) == 0 {
-		c.JSON(200, gin.H{"action": "book upgrade failed", "message": "no data provided to upgrade"})
-	}
-
-	data := db.Model(&Book{}).Where("book_id", bookID).Updates(patchRecord)
-
-	if data.Error != nil {
-		c.JSON(500, gin.H{"error": data.Error})
+	if err := db.Create(&data).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(200, gin.H{"action": "book is upgraded", "book_id": bookID, "book": patchRow})
+	c.JSON(http.StatusOK, gin.H{"data": data})
 }
 
 func removeBook(c *gin.Context) {
 	var bookID = c.Param("id")
 
-	var res = db.Where("book_id = ?", bookID).Delete(&Book{})
+	err := db.Where("book_id = ?", bookID).Delete(&Book{})
+
+	if err.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error.Error()})
+		return
+	}
+
+	if err.RowsAffected == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Book does not exist"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": bookID})
+}
+
+func replaceBook(c *gin.Context) {
+	var record newBook
+	var bookID = c.Param("id")
+	if err := c.ShouldBindJSON(&record); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	row := db.Model(&Book{}).Where("book_id = ?", bookID).Updates(&record)
+	if row.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": row.Error.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": record})
+}
+
+func upgradeBook(c *gin.Context) {
+	var record newBook
+	var bookId = c.Param("id")
+	if err := c.ShouldBindJSON(&record); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var update = make(map[string]interface{})
+
+	if record.Title != nil {
+		update["title"] = record.Title
+	}
+
+	if record.Language != nil {
+		update["language"] = record.Language
+	}
+
+	if record.Summary != nil {
+		update["summary"] = record.Summary
+	}
+
+	if record.Isbn != nil {
+		update["isbn"] = record.Isbn
+	}
+
+	if record.Publisher != nil {
+		update["publisher"] = record.Publisher
+	}
+
+	if record.PublicationDate != nil {
+		update["publication_date"] = record.PublicationDate
+	}
+
+	res := db.Model(&Book{}).Where("book_id = ?", bookId).Updates(&update)
 
 	if res.Error != nil {
-		c.JSON(500, gin.H{"error": res.Error})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": res.Error.Error()})
+		return
 	}
 
 	if res.RowsAffected == 0 {
-		c.JSON(200, gin.H{"action": "book does not exist", "message": "book does not exist"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Book does not exist"})
+		return
 	}
 
-	c.JSON(200, gin.H{"action": "book is removed", "book_id": bookID, "book": res.RowsAffected})
+	c.JSON(http.StatusOK, gin.H{"data": record})
 }
