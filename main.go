@@ -147,6 +147,17 @@ func upgradeBook(c *gin.Context) {
 }
 
 func removeBook(c *gin.Context) {
-	bookID := c.Param("id")
-	c.JSON(200, gin.H{"action": "book is removed", "book_id": bookID})
+	var bookID = c.Param("id")
+
+	var res = db.Where("book_id = ?", bookID).Delete(&Book{})
+
+	if res.Error != nil {
+		c.JSON(500, gin.H{"error": res.Error})
+	}
+
+	if res.RowsAffected == 0 {
+		c.JSON(200, gin.H{"action": "book does not exist", "message": "book does not exist"})
+	}
+
+	c.JSON(200, gin.H{"action": "book is removed", "book_id": bookID, "book": res.RowsAffected})
 }
