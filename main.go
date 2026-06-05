@@ -1,8 +1,23 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+)
+
+var db *gorm.DB
+var err error
 
 func main() {
+
+	var dns string = "host=127.0.0.1 user=root password=root123 dbname=go_inventory sslmode=disable"
+	db, err = gorm.Open(postgres.Open(dns))
+
+	if err != nil {
+		panic(err)
+	}
+
 	router := gin.Default()
 
 	router.GET("/get-book/:id", getBook)
@@ -14,8 +29,22 @@ func main() {
 }
 
 func getBook(c *gin.Context) {
+	type Book struct {
+		BookId    int
+		Title     string
+		language  string
+		Summary   string
+		Isbn      string
+		Publisher string
+	}
+
+	var books []Book
+	err = db.Find(&books).Error
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+	}
 	bookID := c.Param("id")
-	c.JSON(200, gin.H{"action": "book is fetched", "book_id": bookID})
+	c.JSON(200, gin.H{"action": "book is fetched", "book_id": bookID, "book": books})
 }
 
 func addBook(c *gin.Context) {
