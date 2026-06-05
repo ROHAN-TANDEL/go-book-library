@@ -28,15 +28,16 @@ func main() {
 	router.Run(":8080")
 }
 
+type Book struct {
+	BookId    int `gorm:"column:book_id;primaryKey;AutoIncrement" json:"book_id"`
+	Title     string
+	language  string
+	Summary   string
+	Isbn      string
+	Publisher string
+}
+
 func getBook(c *gin.Context) {
-	type Book struct {
-		BookId    int
-		Title     string
-		language  string
-		Summary   string
-		Isbn      string
-		Publisher string
-	}
 
 	var books []Book
 	err = db.Find(&books).Error
