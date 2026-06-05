@@ -50,12 +50,12 @@ func getBook(c *gin.Context) {
 }
 
 type newBook struct {
-	Title           string `json:"title"`
-	Language        string `json:"language"`
-	Summary         string `json:"summary"`
-	Isbn            string `json:"isbn"`
-	Publisher       string `json:"publisher"`
-	PublicationDate string `json:"publication_date"`
+	Title           *string `json:"title"`
+	Language        *string `json:"language"`
+	Summary         *string `json:"summary"`
+	Isbn            *string `json:"isbn"`
+	Publisher       *string `json:"publisher"`
+	PublicationDate *string `json:"publication_date"`
 }
 
 func addBook(c *gin.Context) {
@@ -65,12 +65,12 @@ func addBook(c *gin.Context) {
 	}
 
 	var record Book = Book{
-		Title:           newBook.Title,
-		Summary:         newBook.Summary,
-		Isbn:            newBook.Isbn,
-		Publisher:       newBook.Publisher,
-		PublicationDate: newBook.PublicationDate,
-		Language:        newBook.Language,
+		Title:           *newBook.Title,
+		Summary:         *newBook.Summary,
+		Isbn:            *newBook.Isbn,
+		Publisher:       *newBook.Publisher,
+		PublicationDate: *newBook.PublicationDate,
+		Language:        *newBook.Language,
 	}
 
 	res := db.Create(&record)
@@ -82,8 +82,20 @@ func addBook(c *gin.Context) {
 }
 
 func replaceBook(c *gin.Context) {
-	bookID := c.Param("id")
-	c.JSON(200, gin.H{"action": "book is replaced", "book_id": bookID})
+
+	var replaceBook newBook
+	var bookID any = c.Param("id")
+
+	if err := c.ShouldBindJSON(&replaceBook); err != nil {
+		c.JSON(400, gin.H{"error": err.Error(), "message": "invalid input details"})
+	}
+
+	res := db.Model(&Book{}).Where("book_id", bookID).Updates(replaceBook)
+	if res.Error != nil {
+		c.JSON(500, gin.H{"error": res.Error})
+	}
+
+	c.JSON(200, gin.H{"action": "book is replaced", "book_id": bookID, "book": replaceBook})
 }
 
 func upgradeBook(c *gin.Context) {
