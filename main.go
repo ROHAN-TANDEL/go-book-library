@@ -99,8 +99,51 @@ func replaceBook(c *gin.Context) {
 }
 
 func upgradeBook(c *gin.Context) {
-	bookID := c.Param("id")
-	c.JSON(200, gin.H{"action": "book is upgraded", "book_id": bookID})
+	var bookID = c.Param("id")
+	var patchRow newBook
+	var patchRecord = make(map[string]any)
+
+	if err := c.ShouldBindJSON(&patchRow); err != nil {
+		c.JSON(400, gin.H{"error": err.Error(), "message": "invalid input details"})
+		return
+	}
+
+	if patchRow.Title != nil {
+		patchRecord["title"] = *patchRow.Title
+	}
+
+	if patchRow.Summary != nil {
+		patchRecord["summary"] = *patchRow.Summary
+	}
+
+	if patchRow.Isbn != nil {
+		patchRecord["isbn"] = *patchRow.Isbn
+	}
+
+	if patchRow.Publisher != nil {
+		patchRecord["publisher"] = *patchRow.Publisher
+	}
+
+	if patchRow.PublicationDate != nil {
+		patchRecord["publication_date"] = *patchRow.PublicationDate
+	}
+
+	if patchRow.Title != nil {
+		patchRecord["title"] = *patchRow.Title
+	}
+
+	if len(patchRecord) == 0 {
+		c.JSON(200, gin.H{"action": "book upgrade failed", "message": "no data provided to upgrade"})
+	}
+
+	data := db.Model(&Book{}).Where("book_id", bookID).Updates(patchRecord)
+
+	if data.Error != nil {
+		c.JSON(500, gin.H{"error": data.Error})
+		return
+	}
+
+	c.JSON(200, gin.H{"action": "book is upgraded", "book_id": bookID, "book": patchRow})
 }
 
 func removeBook(c *gin.Context) {
