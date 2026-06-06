@@ -9,3 +9,9 @@ type Book struct {
 	Isbn            string `gorm:"column:isbn" json:"isbn"`
 	Summary         string `gorm:"column:summary" json:"summary"`
 }
+
+type Author struct {
+	Author    int `gorm:"column:author_id;PrimaryKey;AutoIncrement" json:"author_id"`
+	Name      string
+	Biography string
+}

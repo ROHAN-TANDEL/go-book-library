@@ -106,3 +106,91 @@ func upgradeBook(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": record})
 }
+
+func getAuthor(c *gin.Context) {
+	var authorId = c.Param("id")
+	author, err := getAuthorRepo(authorId)
+
+	if err != nil {
+		c.JSON(400, gin.H{"data": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": author})
+}
+
+func getAuthors(c *gin.Context) {
+	authors, err := getAuthorsRepo()
+
+	if err != nil {
+		c.JSON(400, gin.H{"data": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": authors})
+}
+
+func addAuthor(c *gin.Context) {
+	var inputAuthor Author
+	if err := c.ShouldBindJSON(&inputAuthor); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res, err := addAuthorRepo(inputAuthor)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": res})
+}
+
+func replaceAuthor(c *gin.Context) {
+	var authorId = c.Param("id")
+	var inputAuthor Author
+	if err := c.ShouldBindJSON(&inputAuthor); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	res, err := replaceAuthorRepo(authorId, inputAuthor)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": res})
+}
+
+func upgradeAuthor(c *gin.Context) {
+
+	var inputAuthor AuthorPatch
+
+	if err := c.ShouldBindJSON(&inputAuthor); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res, err := upgradeAuthorRepo(c.Param("id"), inputAuthor)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": res})
+}
+
+func removeAuthor(c *gin.Context) {
+	var authorId = c.Param("id")
+	res, err := removeAuthorRepo(authorId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if res == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Author does not exist"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": authorId})
+}

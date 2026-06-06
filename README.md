@@ -18,4 +18,9 @@
 
 		delete:
 		curl -X DELETE "http://localhost:8080/remove-book/28"
+
+        add:
+        curl -X POST "http://localhost:8080/author/add" -d '{"Name": "Akshata Kirchef", "Biography": "worked on Arts"}' -H "Content-Type: application/json"
+
+
 	*/

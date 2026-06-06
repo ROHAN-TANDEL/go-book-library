@@ -69,3 +69,57 @@ func upgradeBookRepo(bookId any, record newBook) (int64, error) {
 	res := db.Model(&Book{}).Where("book_id = ?", bookId).Updates(&update)
 	return res.RowsAffected, res.Error
 }
+
+func getAuthorRepo(authorId any) (Author, error) {
+	var author Author
+	res := db.Where("author_id = ?", authorId).First(&author)
+	return author, res.Error
+}
+
+func getAuthorsRepo() ([]Author, error) {
+	var authors []Author
+	res := db.Find(&authors)
+	return authors, res.Error
+}
+
+func addAuthorRepo(newAuthorInput Author) (Author, error) {
+	record := Author{
+		Name:      newAuthorInput.Name,
+		Biography: newAuthorInput.Biography,
+	}
+	res := db.Create(&record)
+
+	return record, res.Error
+}
+
+func replaceAuthorRepo(authorId any, record Author) (Author, error) {
+	res := db.Model(&Author{}).Where("author_id = ?", authorId).Updates(&record)
+	return record, res.Error
+}
+
+func upgradeAuthorRepo(authorId any, record AuthorPatch) (AuthorPatch, error) {
+	if authorId == nil {
+		return AuthorPatch{}, nil
+	}
+	var update = make(map[string]interface{})
+
+	if record.Name != nil {
+		update["name"] = record.Name
+	}
+
+	if record.Biography != nil {
+		update["biography"] = record.Biography
+	}
+
+	if len(update) != 0 {
+		res := db.Model(&Author{}).Where("author_id = ?", authorId).Updates(&update)
+		return record, res.Error
+	}
+
+	return AuthorPatch{}, nil
+}
+
+func removeAuthorRepo(authorId any) (int64, error) {
+	res := db.Where("author_id = ?", authorId).Delete(&Author{})
+	return res.RowsAffected, res.Error
+}
