@@ -30,7 +30,7 @@ func route(router *gin.Engine) *gin.Engine {
 	category := router.Group("/category")
 	{
 		category.GET("/:id", getCategory)
-		category.GET("/all", getCategory)
+		category.GET("/all", getCategories)
 		category.POST("/add", addCategory)
 		category.PUT("/:id", replaceCategory)
 		category.PATCH("/:id", upgradeCategory)

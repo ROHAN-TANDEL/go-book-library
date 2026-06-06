@@ -123,3 +123,57 @@ func removeAuthorRepo(authorId any) (int64, error) {
 	res := db.Where("author_id = ?", authorId).Delete(&Author{})
 	return res.RowsAffected, res.Error
 }
+
+func getCategoryRepo(catID any) (Category, error) {
+	var category Category
+	err := db.Where("category_id = ?", catID).First(&category)
+	return category, err.Error
+}
+func getCategoriesRepo() ([]Category, error) {
+	var categories []Category
+	res := db.Find(&categories).Error
+	return categories, res
+}
+func addCategoryRepo(category Category) (Category, error) {
+	var record = Category{
+		Name:        category.Name,
+		Description: category.Description,
+	}
+
+	res := db.Create(&record)
+
+	return record, res.Error
+}
+func replaceCategoryRepo(catID any, category Category) (Category, error) {
+	var record = Category{
+		Name:        category.Name,
+		Description: category.Description,
+	}
+	res := db.Where("category_id = ?", catID).Updates(&record)
+
+	return record, res.Error
+}
+func upgradeCategoryRepo(catID any, category CategoryPatch) (CategoryPatch, error) {
+
+	var record = make(map[string]any)
+
+	if category.Name != nil {
+		record["name"] = category.Name
+	}
+
+	if category.Description != nil {
+		record["description"] = category.Description
+	}
+
+	if len(record) == 0 {
+		return CategoryPatch{}, nil
+	}
+
+	res := db.Model(&Category{}).Where("category_id = ?", catID).Updates(&record)
+
+	return category, res.Error
+}
+func removeCategoryRepo(catID any) (any, error) {
+	res := db.Where("category_id = ?", catID).Delete(&Category{})
+	return catID, res.Error
+}

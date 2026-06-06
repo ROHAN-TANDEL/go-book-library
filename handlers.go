@@ -194,3 +194,79 @@ func removeAuthor(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"data": authorId})
 }
+
+func getCategory(c *gin.Context) {
+	var catID = c.Param("id")
+
+	res, err := getCategoryRepo(catID)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": res})
+}
+func getCategories(c *gin.Context) {
+	res, err := getCategoriesRepo()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": res})
+}
+func addCategory(c *gin.Context) {
+	var category Category
+	if err := c.ShouldBindJSON(&category); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res, err := addCategoryRepo(category)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": res})
+}
+func replaceCategory(c *gin.Context) {
+	var category Category
+	var catID = c.Param("id")
+	if err := c.ShouldBindJSON(&category); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res, err := replaceCategoryRepo(catID, category)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+	c.JSON(http.StatusOK, gin.H{"data": res})
+}
+func upgradeCategory(c *gin.Context) {
+	var category CategoryPatch
+	var catID = c.Param("id")
+	if err := c.ShouldBindJSON(&category); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	res, err := upgradeCategoryRepo(catID, category)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": res})
+}
+func removeCategory(c *gin.Context) {
+	var catID = c.Param("id")
+	res, err := removeCategoryRepo(catID)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": res})
+}

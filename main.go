@@ -25,6 +25,11 @@ type AuthorPatch struct {
 	Biography *string
 }
 
+type CategoryPatch struct {
+	Name        *string
+	Description *string
+}
+
 func main() {
 	db = connect()
 	var router *gin.Engine

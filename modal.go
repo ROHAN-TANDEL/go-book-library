@@ -15,3 +15,9 @@ type Author struct {
 	Name      string
 	Biography string
 }
+
+type Category struct {
+	CategoryId  uint   `gorm:"column:category_id;PrimaryKey;AutoIncrement" json:"category_id"`
+	Name        string `gorm:"column:name" json:"name"`
+	Description string `gorm:"column:description" json:"description"`
+}
