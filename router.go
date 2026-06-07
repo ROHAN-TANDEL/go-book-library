@@ -10,7 +10,7 @@ func route(router *gin.Engine) *gin.Engine {
 	book := router.Group("/book")
 	{
 		book.GET("/:id", getBook)
-		book.GET("/allwertyuiolkjhgvfcxdfghjmnbvcfghjk", getBooks)
+		book.GET("/all", getBooks)
 		book.POST("/add", addBook)
 		book.PUT("/:id", replaceBook)
 		book.PATCH("/:id", upgradeBook)

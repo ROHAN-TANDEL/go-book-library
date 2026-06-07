@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,7 +40,8 @@ func getBook(c *gin.Context) {
 
 func getBooks(c *gin.Context) {
 
-	books, err := getBooksRepo()
+	var page = paginate(c)
+	books, err := getBooksRepo(page)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -209,7 +211,9 @@ func getCategory(c *gin.Context) {
 }
 
 func getCategories(c *gin.Context) {
-	res, err := getCategoriesRepo()
+
+	var filter = paginate(c)
+	res, err := getCategoriesRepo(filter)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -274,4 +278,41 @@ func removeCategory(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": res})
+}
+
+func paginate(c *gin.Context) map[string]int {
+	var page = make(map[string]int)
+
+	page = map[string]int{
+		"limit":  10,
+		"offset": 0,
+	}
+
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	offset, err := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return page
+	}
+
+	if limit > 100 {
+		limit = 100
+	}
+	if limit < 0 {
+		limit = 0
+	}
+	if offset > 100 {
+		offset = 100
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	page = map[string]int{
+		"limit":  limit,
+		"offset": offset,
+	}
+
+	return page
 }

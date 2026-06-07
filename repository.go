@@ -1,5 +1,7 @@
 package main
 
+import "gorm.io/gorm"
+
 func addBookRepo(record *newBook) (Book, error) {
 	var data = Book{
 		Title:           *record.Title,
@@ -22,10 +24,11 @@ func getBookRepo(bookId any) (Book, error) {
 	return books, err.Error
 }
 
-func getBooksRepo() ([]Book, error) {
+func getBooksRepo(page map[string]int) ([]Book, error) {
 	var books []Book
-	err := db.Find(&books)
-	return books, err.Error
+	booksList := paginateRepo(db, page)
+	res := booksList.Find(&books)
+	return books, res.Error
 }
 
 func removeBookRepo(bookId any) (int64, error) {
@@ -129,11 +132,14 @@ func getCategoryRepo(catID any) (Category, error) {
 	err := db.Where("category_id = ?", catID).First(&category)
 	return category, err.Error
 }
-func getCategoriesRepo() ([]Category, error) {
+
+func getCategoriesRepo(page map[string]int) ([]Category, error) {
 	var categories []Category
-	res := db.Find(&categories).Error
-	return categories, res
+	db = paginateRepo(db, page)
+	data := db.Debug().Find(&categories)
+	return categories, data.Error
 }
+
 func addCategoryRepo(category Category) (Category, error) {
 	var record = Category{
 		Name:        category.Name,
@@ -144,6 +150,7 @@ func addCategoryRepo(category Category) (Category, error) {
 
 	return record, res.Error
 }
+
 func replaceCategoryRepo(catID any, category Category) (Category, error) {
 	var record = Category{
 		Name:        category.Name,
@@ -153,6 +160,7 @@ func replaceCategoryRepo(catID any, category Category) (Category, error) {
 
 	return record, res.Error
 }
+
 func upgradeCategoryRepo(catID any, category CategoryPatch) (CategoryPatch, error) {
 
 	var record = make(map[string]any)
@@ -173,7 +181,24 @@ func upgradeCategoryRepo(catID any, category CategoryPatch) (CategoryPatch, erro
 
 	return category, res.Error
 }
+
 func removeCategoryRepo(catID any) (any, error) {
 	res := db.Where("category_id = ?", catID).Delete(&Category{})
 	return catID, res.Error
+}
+
+func paginateRepo(db *gorm.DB, filters map[string]int) *gorm.DB {
+	var tempdb = db
+	if filters != nil {
+		if filters["limit"] > 0 {
+			tempdb = tempdb.Limit(filters["limit"])
+		} else {
+			tempdb = tempdb.Limit(2)
+		}
+
+		if filters["offset"] > 0 {
+			tempdb = tempdb.Offset(filters["offset"])
+		}
+	}
+	return tempdb
 }
