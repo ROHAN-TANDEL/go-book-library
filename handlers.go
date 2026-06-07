@@ -207,6 +207,7 @@ func getCategory(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": res})
 }
+
 func getCategories(c *gin.Context) {
 	res, err := getCategoriesRepo()
 	if err != nil {
@@ -215,6 +216,7 @@ func getCategories(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"data": res})
 }
+
 func addCategory(c *gin.Context) {
 	var category Category
 	if err := c.ShouldBindJSON(&category); err != nil {
@@ -230,6 +232,7 @@ func addCategory(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": res})
 }
+
 func replaceCategory(c *gin.Context) {
 	var category Category
 	var catID = c.Param("id")
@@ -244,6 +247,7 @@ func replaceCategory(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"data": res})
 }
+
 func upgradeCategory(c *gin.Context) {
 	var category CategoryPatch
 	var catID = c.Param("id")
@@ -260,6 +264,7 @@ func upgradeCategory(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": res})
 }
+
 func removeCategory(c *gin.Context) {
 	var catID = c.Param("id")
 	res, err := removeCategoryRepo(catID)
