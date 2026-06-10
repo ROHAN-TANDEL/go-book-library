@@ -10,19 +10,23 @@ import (
 )
 
 var db *gorm.DB
+var jwtSecret = []byte("simple-super-secret-key")
 
 func main() {
 	database()
 	router := gin.Default()
 
 	user := router.Group("/user")
+	user.Use(AuthMiddleware())
 	{
 		user.GET("/:id", getUser)
 		user.POST("/add", addUser)
 		user.PUT("/:id", updateUser)
 		user.DELETE("/:id", removeUser)
-		user.POST("/authenticate", authenticate)
+		//		user.POST("/token", )
 	}
+
+	router.POST("/authenticate", authenticate)
 
 	err := router.Run(":8081")
 
@@ -182,13 +186,13 @@ func removeUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user_id": userId})
 }
 
-type authenticateRequest struct {
+type AuthenticateRequest struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
 func authenticate(c *gin.Context) {
-	var authenticateRequest authenticateRequest
+	var authenticateRequest AuthenticateRequest
 
 	if err := c.ShouldBindJSON(&authenticateRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -210,7 +214,13 @@ func authenticate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"user": user})
+	token, err := jwtToken(user.UserId, user.Username, true)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"user": user, "token": token})
 
 }
 
@@ -229,6 +239,13 @@ func validatePassword(hash string, password string) bool {
 	return err == nil
 }
 
-//func newJWT() {
-//	data := jwt.NewWithClaims(jwt.)
-//}
+func jwtToken(userID uint, username string, allowed bool) (string, error) {
+
+	return "", nil
+}
+
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+	}
+}
