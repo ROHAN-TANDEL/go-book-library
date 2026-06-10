@@ -3,14 +3,16 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"net/http"
+	"time"
 )
 
 var db *gorm.DB
-var jwtSecret = []byte("simple-super-secret-key")
+var jwtSecret = "simple-super-secret-key"
 
 func main() {
 	database()
@@ -133,6 +135,7 @@ func updateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	record := User{
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
@@ -239,13 +242,72 @@ func validatePassword(hash string, password string) bool {
 	return err == nil
 }
 
+type UserClaims struct {
+	UserID   uint   `json:"user_id"`
+	UserName string `json:"username"`
+	Allowed  bool   `json:"allowed"`
+	jwt.RegisteredClaims
+}
+
 func jwtToken(userID uint, username string, allowed bool) (string, error) {
 
-	return "", nil
+	var claims = UserClaims{
+		UserID:   userID,
+		UserName: username,
+		Allowed:  allowed,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	tokenString, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }
 
 func AuthMiddleware() gin.HandlerFunc {
+
 	return func(c *gin.Context) {
+
+		// validate the bearer
+		authHeader := c.GetHeader("Authorization")
+		if len(authHeader) < 8 || authHeader[:7] != "Bearer " {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing or invalid"})
+			c.Abort()
+			return
+		}
+
+		tokenString := authHeader[7:]
+
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+			return []byte(jwtSecret), nil
+		})
+
+		if err != nil || !token.Valid {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			c.Abort()
+			return
+		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid claims"})
+			c.Abort()
+			return
+		}
+
+		// Save user details into Gin context for downstream CRUD route handlers
+		c.Set("userID", claims["UserID"].(string))
+		c.Set("userName", claims["UserName"].(string))
+		c.Set("allowed", claims["Allowed"].(string))
+
 		c.Next()
 	}
 }
