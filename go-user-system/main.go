@@ -302,11 +302,13 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-
+		fmt.Println(claims)
 		// Save user details into Gin context for downstream CRUD route handlers
-		c.Set("userID", claims["UserID"].(string))
-		c.Set("userName", claims["UserName"].(string))
-		c.Set("allowed", claims["Allowed"].(string))
+		c.Set("userID", claims["user_id"].(float64))
+		c.Set("userName", claims["username"].(string))
+		c.Set("allowed", claims["allowed"].(bool))
+		c.Set("exp", claims["exp"].(float64))
+		c.Set("iat", claims["iat"].(float64))
 
 		c.Next()
 	}
