@@ -2,19 +2,19 @@ package main
 
 import "gorm.io/gorm"
 
-func addBookRepo(record *newBook) (Book, error) {
-	var data = Book{
-		Title:           *record.Title,
-		Publisher:       *record.Publisher,
-		Language:        *record.Language,
-		Isbn:            *record.Isbn,
-		PublicationDate: *record.PublicationDate,
-		Summary:         *record.Summary,
-	}
+func addBookRepo(record *newBook) (*newBook, error) {
+	//var data = newBook{
+	//	Title:           *record.Title,
+	//	Publisher:       *record.Publisher,
+	//	Language:        *record.Language,
+	//	Isbn:            *record.Isbn,
+	//	PublicationDate: *record.PublicationDate,
+	//	Summary:         *record.Summary,
+	//	Authors
+	//}
+	err := db.Debug().Create(&record)
 
-	err := db.Create(&data)
-
-	return data, err.Error
+	return record, err.Error
 
 }
 
@@ -90,7 +90,7 @@ func addAuthorRepo(newAuthorInput Author) (Author, error) {
 		Name:      newAuthorInput.Name,
 		Biography: newAuthorInput.Biography,
 	}
-	res := db.Create(&record)
+	res := db.Where(Author{Name: newAuthorInput.Name}).Create(&record)
 
 	return record, res.Error
 }
@@ -146,8 +146,7 @@ func addCategoryRepo(category Category) (Category, error) {
 		Description: category.Description,
 	}
 
-	res := db.Create(&record)
-
+	res := db.Where(Category{Name: category.Name}).FirstOrCreate(&record)
 	return record, res.Error
 }
 

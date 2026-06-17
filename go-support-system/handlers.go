@@ -316,3 +316,13 @@ func paginate(c *gin.Context) map[string]int {
 
 	return page
 }
+
+func externalBooks(c *gin.Context) {
+	res, err := getBooksViaAPI(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": res})
+}

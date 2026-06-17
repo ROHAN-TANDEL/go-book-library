@@ -11,6 +11,7 @@ func route(router *gin.Engine) *gin.Engine {
 	{
 		book.GET("/:id", getBook)
 		book.GET("/all", getBooks)
+		book.GET("/all-alt", externalBooks)
 		book.POST("/add", addBook)
 		book.PUT("/:id", replaceBook)
 		book.PATCH("/:id", upgradeBook)

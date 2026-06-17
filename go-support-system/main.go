@@ -12,7 +12,6 @@ import (
 var db *gorm.DB
 
 func main() {
-	ctx := ctx()
 	db = connect()
 	var router *gin.Engine
 

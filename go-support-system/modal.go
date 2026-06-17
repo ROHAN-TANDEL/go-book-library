@@ -1,7 +1,7 @@
 package main
 
 type Book struct {
-	BookId          int `gorm:"column:book_id;primaryKey;AutoIncrement" json:"book_id"`
+	BookId          int `gorm:"column:book_id;primaryKey;autoIncrement" json:"book_id"`
 	Title           string
 	Language        string
 	Publisher       string
@@ -11,13 +11,13 @@ type Book struct {
 }
 
 type Author struct {
-	Author    int `gorm:"column:author_id;PrimaryKey;AutoIncrement" json:"author_id"`
+	AuthorID  int `gorm:"column:author_id;primaryKey;autoIncrement" json:"author_id"`
 	Name      string
 	Biography string
 }
 
 type Category struct {
-	CategoryId  uint   `gorm:"column:category_id;PrimaryKey;AutoIncrement" json:"category_id"`
+	CategoryID  uint   `gorm:"column:category_id;primaryKey;autoIncrement" json:"category_id"`
 	Name        string `gorm:"column:name" json:"name"`
 	Description string `gorm:"column:description" json:"description"`
 }
