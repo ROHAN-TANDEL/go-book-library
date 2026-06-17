@@ -1,0 +1,57 @@
+# ##########################################
+# Go Binaries and Compiled Artifacts
+# ##########################################
+# Compiled applications
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Common binary output directories
+bin/
+dist/
+out/
+
+# Test binaries built with `go test -c`
+*.test
+
+# ##########################################
+# Testing & Code Coverage Artifacts
+# ##########################################
+*.out
+*.coverprofile
+coverage.*
+profile.cov
+
+# ##########################################
+# Dependency Directories
+# ##########################################
+# Uncomment this if you strictly prefer not to commit your vendored dependencies
+# vendor/
+
+# ##########################################
+# Go Workspaces and Build Caches
+# ##########################################
+# Go workspace files should generally stay local unless agreed upon by your team
+go.work
+go.work.sum
+
+# ##########################################
+# Development Environments & Tooling
+# ##########################################
+# Environment configuration files containing secrets
+.env
+*.env
+
+# JetBrains IDEs (Goland, IntelliJ)
+.idea/
+*.iml
+
+# Visual Studio Code
+.vscode/
+
+# Operating System specific files
+.DS_Store
+Thumbs.db
+
